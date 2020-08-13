@@ -2,8 +2,9 @@ pipeline {
     agent any
 
     stages {
-        stage('Build') {
+        stage('Build Image') {
             steps {
+                sh './run_docker.sh'
                 echo 'Building..'
             }
         }
