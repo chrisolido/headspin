@@ -12,15 +12,7 @@ try {
   stage('Clone Repo'){
     node('master'){
       cleanWs()
-      checkout([$class: 'GitSCM', branches: [[name: '*/$GIT_BRANCH']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'git@github.com:chrisolido/web-app.git']]])
-    }
-  }
-
-  stage('Build Maven'){
-    node('master'){
-      withMaven(maven: 'apache-maven3.6'){
-      sh "mvn clean package"
-      } 
+      checkout([$class: 'GitSCM', branches: [[name: '*/$GIT_BRANCH']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'git@github.com:chrisolido/headspin.git']]])
     }
   }
 
@@ -42,19 +34,54 @@ try {
     }
   }
 
-  stage('Deploy on Dev') {
+  stage('Deploy Blue Dev') {
   	node('master'){
     	withEnv(["KUBECONFIG=${JENKINS_HOME}/.kube/dev-config","IMAGE=${ACCOUNT}.dkr.ecr.ap-southeast-1.amazonaws.com/${ECR_REPO_NAME}:${IMAGETAG}"]){
-        	sh "sed -i 's|IMAGE|${IMAGE}|g' k8s/deployment.yaml"
-        	sh "sed -i 's|ACCOUNT|${ACCOUNT}|g' k8s/service.yaml"
-        	sh "sed -i 's|ENVIRONMENT|dev|g' k8s/*.yaml"
-        	sh "sed -i 's|BUILD_NUMBER|01|g' k8s/*.yaml"
-        	sh "kubectl apply -f k8s"
+        	sh "sed -i 's|IMAGE|${IMAGE}|g' blue/blue-controller.yaml"
+        	sh "sed -i 's|ACCOUNT|${ACCOUNT}|g' blue-green-service.yaml"
+        	sh "sed -i 's|ENVIRONMENT|dev|g' blue/*.yaml"
+        	sh "sed -i 's|BUILD_NUMBER|01|g' blue/*.yaml"
+        	sh "kubectl apply -f blue"
         	DEPLOYMENT = sh (
-          		script: 'cat k8s/deployment.yaml | yq r - metadata.name',
+          		script: 'cat blue/blue-controller.yaml | yq r - metadata.name',
           		returnStdout: true
         	).trim()
-        	echo "Creating k8s resources..."
+        	echo "Creating Blue resources..."
+        	sleep 180
+        	DESIRED= sh (
+          		script: "kubectl get deployment/$DEPLOYMENT | awk '{print \$3}' | grep -v DESIRED",
+          		returnStdout: true
+         	).trim()
+        	CURRENT= sh (
+          		script: "kubectl get deployment/$DEPLOYMENT | awk '{print \$3}' | grep -v CURRENT",
+          		returnStdout: true
+         	).trim()
+        	if (DESIRED.equals(CURRENT)) {
+          		currentBuild.result = "SUCCESS"
+          		return
+        	} else {
+          		error("Deployment Unsuccessful.")
+          		currentBuild.result = "FAILURE"
+          		return
+        	}
+      	}
+    }
+  }
+}
+
+stage('Deploy Green Dev') {
+  	node('master'){
+    	withEnv(["KUBECONFIG=${JENKINS_HOME}/.kube/dev-config","IMAGE=${ACCOUNT}.dkr.ecr.ap-southeast-1.amazonaws.com/${ECR_REPO_NAME}:${IMAGETAG}"]){
+        	sh "sed -i 's|IMAGE|${IMAGE}|g' green/green-controller.yaml"
+        	sh "sed -i 's|ACCOUNT|${ACCOUNT}|g' blue-green-service.yaml"
+        	sh "sed -i 's|ENVIRONMENT|dev|g' green/*.yaml"
+        	sh "sed -i 's|BUILD_NUMBER|01|g' green/*.yaml"
+        	sh "kubectl apply -f green"
+        	DEPLOYMENT = sh (
+          		script: 'cat green/green-controller.yaml | yq r - metadata.name',
+          		returnStdout: true
+        	).trim()
+        	echo "Creating Green on Dev resources..."
         	sleep 180
         	DESIRED= sh (
           		script: "kubectl get deployment/$DEPLOYMENT | awk '{print \$3}' | grep -v DESIRED",
@@ -95,20 +122,20 @@ catch (err) {
     return
 }
 
-stage('Deploy on Prod') {
+stage('Deploy Blue on Prod') {
     node('master'){
     	if (userInput['DEPLOY_TO_PROD'] == true) {
     		echo "Deploying to Production..."       
        		withEnv(["KUBECONFIG=${JENKINS_HOME}/.kube/prod-config","IMAGE=${ACCOUNT}.dkr.ecr.ap-southeast-1.amazonaws.com/${ECR_REPO_NAME}:${IMAGETAG}"]){
-        		sh "sed -i 's|IMAGE|${IMAGE}|g' k8s/deployment.yaml"
-        		sh "sed -i 's|ACCOUNT|${ACCOUNT}|g' k8s/service.yaml"
-        		sh "sed -i 's|dev|prod|g' k8s/*.yaml"
-        		sh "kubectl apply -f k8s"
+        		sh "sed -i 's|IMAGE|${IMAGE}|g' blue/blue-controller.yaml"
+        		sh "sed -i 's|ACCOUNT|${ACCOUNT}|g' blue/blue-green-service.yaml"
+        		sh "sed -i 's|dev|prod|g' blue/*.yaml"
+        		sh "kubectl apply -f blue"
         		DEPLOYMENT = sh (
-          			script: 'cat k8s/deployment.yaml | yq r - metadata.name',
+          			script: 'cat blue/blue-controller.yaml | yq r - metadata.name',
           			returnStdout: true
         		).trim()
-        		echo "Creating k8s resources..."
+        		echo "Creating Blue on Prod resources..."
         		sleep 180
         		DESIRED= sh (
           			script: "kubectl get deployment/$DEPLOYMENT | awk '{print \$3}' | grep -v DESIRED",
@@ -140,7 +167,7 @@ stage('Validate Prod Green Env') {
      if (userInput['PROD_BLUE_DEPLOYMENT'] == false) {
     	withEnv(["KUBECONFIG=${JENKINS_HOME}/.kube/prod-config"]){
         	GREEN_SVC_NAME = sh (
-          		script: "yq metadata.name k8s/service.yaml | tr -d '\"'",
+          		script: "yq metadata.name blue/blue-green-service.yaml | tr -d '\"'",
           		returnStdout: true
         	).trim()
         	GREEN_LB = sh (
