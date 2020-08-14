@@ -20,12 +20,5 @@ node{
       sh 'docker push bogsolido/testgreenimage'
     }
   stage('Create the Blue Pod in EKS'){
-    sshagent(['Jenkins-server']) {
-      script{
-        try{
-          sh 'ssh ubuntu@3.1.60.7 kubectl apply -f headspin/blue/blue-controller.json'
-        }
-      }
-    }
   }
 }
