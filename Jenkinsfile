@@ -3,14 +3,14 @@ node{
     git credentialsId: 'git-creds', url: 'https://github.com/chrisolido/headspin.git'
   }
   stage('Scm Checkout'){
-    sh 'docker build . -t web-app-ecr:testblueimage -f blue/Dockerfile'
-    sh 'docker build . -t web-app-ecr:testgreenimage -f green/Dockerfile'
+    sh 'docker build . -t blue -f blue/.'
+    sh 'docker build . -t green -f green/.'
   }
   stage('Test Blue Build container'){
-    sh 'docker run -p 80:8080 -d web-app-ecr:testblueimage web-app-ecr/testblueimage'
+    sh 'docker run -t -i -p 80:80 -d blue'
   }
   stage('Test Green Build container'){
-    sh 'docker run -p 80:8080 -d web-app-ecr:testgreenimage web-app-ecr/testgreenimage'
+    sh 'docker run -t -i -p 80:80 -d green'
   }
   stage('Push Docker Image'){
     withCredentials([string(credentialsId: 'docker-pwd', variable: 'dockerHubPwd')]) {
