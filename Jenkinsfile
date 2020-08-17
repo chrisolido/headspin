@@ -7,10 +7,10 @@ node{
     sh 'docker build . -t green -f green/Dockerfile'
   }
   stage('Test Blue Build container'){
-    sh 'docker run -t -i -p 80:80 -d blue'
+    sh 'docker run -t -i -p 80:80 blue'
   }
   stage('Test Green Build container'){
-    sh 'docker run -t -i -p 80:80 -d green'
+    sh 'docker run -t -i -p 80:80 green'
   }
   stage('Push Docker Image'){
     withCredentials([string(credentialsId: 'docker-pwd', variable: 'dockerHubPwd')]) {
