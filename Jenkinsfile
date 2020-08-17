@@ -24,11 +24,11 @@ spec:
 """
     }
   }
-  node{
-  stage('Scm Checkout'){
-    git credentialsId: 'git-creds', url: 'https://github.com/chrisolido/headspin.git'
-  }
   stages {
+    node{
+    stage('Scm Checkout'){
+      git credentialsId: 'git-creds', url: 'https://github.com/chrisolido/headspin.git'
+    }
     stage('Build with Img') {
       environment {
         PATH = "/home/user/bin:$PATH"
