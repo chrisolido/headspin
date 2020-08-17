@@ -5,6 +5,7 @@ node{
   stage('Scm Checkout'){
     def dockerHome = tool 'docker'
     env.PATH = "${dockerHome}/bin:${env.PATH}"
+    sh 'service docker start'
     sh 'docker build . -t blue -f blue/Dockerfile'
     sh 'docker build . -t green -f green/Dockerfile'
   }
