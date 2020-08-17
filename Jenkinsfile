@@ -4,7 +4,7 @@ node{
   }
   stage('Scm Checkout'){
     sh 'docker build . -t testblueimage -f blue/Dockerfile'
-    sh 'docker build . -t testblueimage -f green/Dockerfile'
+    sh 'docker build . -t testgreenimage -f green/Dockerfile'
   }
   stage('Test Blue Build container'){
     sh 'docker run -p 80:8080 -d testblueimage bogsolido/testblueimage'
