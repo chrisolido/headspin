@@ -3,8 +3,8 @@ node{
     git credentialsId: 'git-creds', url: 'https://github.com/chrisolido/headspin.git'
   }
   stage('Scm Checkout'){
-    sh 'docker build . -t blue -f blue/.'
-    sh 'docker build . -t green -f green/.'
+    sh 'docker build . -t blue -f blue/Dockerfile'
+    sh 'docker build . -t green -f green/Dockerfile'
   }
   stage('Test Blue Build container'){
     sh 'docker run -t -i -p 80:80 -d blue'
