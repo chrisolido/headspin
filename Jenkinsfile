@@ -18,7 +18,7 @@ node{
       sh 'docker push 016524045799.dkr.ecr.ap-southeast-1.amazonaws.com/web-app-ecr:green'
     }
   stage('Create the Blue Pod in EKS'){
-      sshagent(['ssh-ubuntu']) {
+      sshagent(credentials: ['ssh-ubuntu'], ignoreMissing: true) {
       sh 'kubectl apply -f /headspin/blue/blue-controller.json'
     }
   }
