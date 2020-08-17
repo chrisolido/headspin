@@ -7,8 +7,8 @@ node{
     sh 'docker build . -t green -f green/Dockerfile'
   }
   stage('Tag the build image'){
-    sh 'docker tag blue aws_account_id.dkr.ecr.region.amazonaws.com/blue'
-    sh 'docker tag green aws_account_id.dkr.ecr.region.amazonaws.com/green'
+    sh 'docker tag blue aws_account_id.dkr.ecr.region.amazonaws.com/web-app-ecr'
+    sh 'docker tag green aws_account_id.dkr.ecr.region.amazonaws.com/web-app-ecr'
   }
   stage('Push Docker Image to ECR'){
     withCredentials([string(credentialsId: 'docker-pwd', variable: 'dockerHubPwd')]) {
