@@ -18,6 +18,7 @@ node{
       sh 'docker push 016524045799.dkr.ecr.ap-southeast-1.amazonaws.com/web-app-ecr:green'
     }
   stage('Create the Blue Pod in EKS'){
+      sh 'chmod 755 blue/run_kubernetes.sh'
       sh 'blue/run_kubernetes.sh'
   }
 }
