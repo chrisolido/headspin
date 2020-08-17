@@ -18,8 +18,8 @@ node{
       sh 'docker push 016524045799.dkr.ecr.ap-southeast-1.amazonaws.com/web-app-ecr:green'
     }
   stage('Create the Blue Pod in EKS'){
-      kubeconfig(credentialsId: 'kubeconfig', serverUrl: 'https://E0BCDBD36CC361F21CB2B3F16C4C04A8.gr7.ap-southeast-1.eks.amazonaws.com') {
-      sh 'kubectl apply -f ./blue-controller.json'
+      sshagent(['ssh-ubuntu']) {
+      sh 'kubectl apply -f /headspin/blue/blue-controller.json'
     }
   }
 }
