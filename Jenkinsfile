@@ -3,6 +3,8 @@ node{
     git credentialsId: 'git-creds', url: 'https://github.com/chrisolido/headspin.git'
   }
   stage('Scm Checkout'){
+    def dockerHome = tool 'docker'
+    env.PATH = "${dockerHome}/bin:${env.PATH}"
     sh 'docker build . -t blue -f blue/Dockerfile'
     sh 'docker build . -t green -f green/Dockerfile'
   }
