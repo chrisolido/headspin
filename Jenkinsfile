@@ -17,18 +17,25 @@ node{
       sh 'docker push 016524045799.dkr.ecr.ap-southeast-1.amazonaws.com/web-app-ecr:green'
       }
   }
-  stage('Create the Blue Pod in EKS'){
+  stage('Deploy the Blue Pod in EKS'){
       sshagent(['ssh-ubuntu']) {
         script{
           sh 'ssh -o StrictHostKeyChecking=no -l ubuntu 192.168.1.166 kubectl apply -f /home/ubuntu/headspin/blue/blue-controller.json'
         }
      }
   }
-  stage('Create the Green Pod in EKS'){
+  stage('Deploy the Green Pod in EKS'){
       sshagent(['ssh-ubuntu']) {
         script{
           sh 'ssh -o StrictHostKeyChecking=no -l ubuntu 192.168.1.166 kubectl apply -f /home/ubuntu/headspin/green/green-controller.json'
-        }
+       }
+     }
+  }
+  stage('Deploy the Blue-Green Service (ELB) in EKS'){
+       sshagent(['ssh-ubuntu']) {
+         script{
+           sh 'ssh -o StrictHostKeyChecking=no -l ubuntu 192.168.1.166 kubectl apply -f /home/ubuntu/headspin/blue-green-service.json'
       }
-    }  
+    }
+  }
 }
