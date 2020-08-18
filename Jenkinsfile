@@ -1,55 +1,24 @@
-pipeline {
-  agent {
-    kubernetes {
-      //cloud 'kubernetes'
-      yaml """
-kind: Pod
-metadata:
-  name: img
-spec:
-  containers:
-  - name: img
-    image: jessfraz/img
-    imagePullPolicy: Always
-    command:
-    - cat
-    tty: true
-    volumeMounts:
-      - name: docker-config
-        mountPath: /home/user/.docker
-  volumes:
-    - name: docker-config
-      configMap:
-        name: docker-config
-"""
-    }
+node{
+  stage('Scm Checkout'){
+    git credentialsId: 'git-creds', url: 'https://github.com/chrisolido/headspin.git'
   }
-  stages {
-    node{
-    stage('Scm Checkout'){
-      git credentialsId: 'git-creds', url: 'https://github.com/chrisolido/headspin.git'
+  stage('Scm Checkout'){
+    sh 'docker build . -t blue -f blue/Dockerfile'
+    sh 'docker build . -t green -f green/Dockerfile'
+  }
+  stage('Tag the build image'){
+    sh 'docker tag blue 016524045799.dkr.ecr.ap-southeast-1.amazonaws.com/web-app-ecr:blue'
+    sh 'docker tag green 016524045799.dkr.ecr.ap-southeast-1.amazonaws.com/web-app-ecr:green'
+  }
+  stage('Push Docker Image to ECR'){
+    withCredentials([string(credentialsId: 'docker-pwd', variable: 'dockerHubPwd')]) {
+      sh "aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin 016524045799.dkr.ecr.ap-southeast-1.amazonaws.com"
     }
-    stage('Build with Img') {
-      environment {
-        PATH = "/home/user/bin:$PATH"
-      }
-      steps {
-        git 'https://github.com/chrisolido/headspin.git'
-        container(name: 'img') {
-            sh 'wget https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.3.1/linux-amd64/docker-credential-ecr-login'
-            sh 'chmod +x docker-credential-ecr-login'
-            sh 'mkdir ~/bin'
-            sh 'mv docker-credential-ecr-login ~/bin/docker-credential-ecr-login'
-            sh '''
-            img build . -t 601307987632.dkr.ecr.ap-southeast-1.amazonaws.com/web:latest -t 601307987632.dkr.ecr.ap-southeast-1.amazonaws.com/web:vImg$BUILD_NUMBER
-            '''
-            sh ' img push 601307987632.dkr.ecr.ap-southeast-1.amazonaws.com/web:latest'
-            sh ' img push 601307987632.dkr.ecr.ap-southeast-1.amazonaws.com/web:vImg$BUILD_NUMBER'
-        }
-      }
+      sh 'docker push 016524045799.dkr.ecr.ap-southeast-1.amazonaws.com/web-app-ecr:blue'
+      sh 'docker push 016524045799.dkr.ecr.ap-southeast-1.amazonaws.com/web-app-ecr:green'
+    }
+  stage('Create the Blue Pod in EKS'){
+      sh 'kubectl apply -f /headspin/blue/blue-controller.json'
     }
   }
 }
-
-  
-  
