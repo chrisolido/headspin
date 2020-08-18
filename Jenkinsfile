@@ -38,4 +38,12 @@ node{
       }
     }
   }
+  stage('Get the Public URL of the sevice'){
+       sshagent(['ssh-ubuntu']) {
+         script{
+           sh 'ssh -o StrictHostKeyChecking=no -l ubuntu 192.168.1.166 kubectl get svc bluegreenlb | awk '{print $4 $5}'
+      }
+    }
+  }
 }
+
