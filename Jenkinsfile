@@ -19,7 +19,7 @@ node{
   }
   stage('Create the Blue Pod in EKS'){
       sshagent(['ssh-ubuntu']) {
-      sh 'kubectl apply -f /headspin/blue/blue-controller.json'
+      sh 'kubectl apply -f /headspin/blue/blue-controller.json --kubeconfig=.kube/config' 
     }
   }
 }
