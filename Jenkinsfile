@@ -20,8 +20,7 @@ node{
   stage('Create the Blue Pod in EKS'){
       sshagent(['ssh-ubuntu']) {
         script{
-          sh 'ssh -o StrictHostKeyChecking=no -l ubuntu 192.168.1.166 uname -a'
-          sh 'kubectl apply -f /headspin/blue/blue-controller.json'
+          sh 'ssh -o StrictHostKeyChecking=no -l ubuntu 192.168.1.166 kubectl apply -f /headspin/blue/blue-controller.json'
         }
      }
   }
