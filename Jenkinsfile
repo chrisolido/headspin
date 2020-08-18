@@ -13,12 +13,11 @@ node{
   stage('Push Docker Image to ECR'){
     withCredentials([string(credentialsId: 'docker-pwd', variable: 'dockerHubPwd')]) {
       sh "aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin 016524045799.dkr.ecr.ap-southeast-1.amazonaws.com"
-    }
       sh 'docker push 016524045799.dkr.ecr.ap-southeast-1.amazonaws.com/web-app-ecr:blue'
       sh 'docker push 016524045799.dkr.ecr.ap-southeast-1.amazonaws.com/web-app-ecr:green'
-    }
+      }
+  }
   stage('Create the Blue Pod in EKS'){
       sh 'kubectl apply -f /headspin/blue/blue-controller.json'
     }
-  }
 }
