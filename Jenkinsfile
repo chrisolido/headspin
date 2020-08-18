@@ -19,7 +19,10 @@ node{
   }
   stage('Create the Blue Pod in EKS'){
       sshagent(['ssh-ubuntu']) {
-      sh 'kubectl apply -f /headspin/blue/blue-controller.json --kubeconfig=.kube/config' 
-    }
+        script{
+          sh 'ssh -o StrictHostKeyChecking=no -l ubuntu ec2-13-212-22-215.ap-southeast-1.compute.amazonaws.com uname -a'
+          sh 'kubectl apply -f /headspin/blue/blue-controller.json'
+        }
+     }
   }
 }
