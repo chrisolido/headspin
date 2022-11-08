@@ -1,4 +1,4 @@
-# headspin
+# HeadSpin
 
 Login with ECR:
 
